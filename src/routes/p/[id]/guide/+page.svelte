@@ -148,8 +148,9 @@
 		const s = step;
 		const label = pieceLabel(piece.label);
 		let finished = false;
+		let saved: Promise<unknown> = Promise.resolve();
 		try {
-			await ws.commit(`Place ${label}`, (d) => {
+			saved = ws.commit(`Place ${label}`, (d) => {
 				// decide completion from the document itself, not from a possibly stale count
 				if (!d.placements.some((p) => p.pieceId === s.pieceId)) {
 					d.placements.push({ id: crypto.randomUUID(), pieceId: s.pieceId, row: s.row, col: s.col, rot: s.rot, source, evidence, at: Date.now() });
@@ -161,6 +162,8 @@
 					finished = true;
 				}
 			});
+			// show the finished board right away; the save completes in the background
+			if (!finished) await saved;
 		} finally {
 			confirming = false;
 		}

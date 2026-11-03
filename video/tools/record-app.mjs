@@ -109,42 +109,42 @@ await page.goto(BASE + '/');
 await page.waitForLoadState('networkidle');
 await moveTo(700, 520, 0.2);
 await sleep(1.0);
-begin('s03_scan');
-await at(word('s03_scan', 'open') - 0.6);
-await moveToEl(page.getByRole('button', { name: /Try Sample Puzzle/ }), 0.7);
+begin('v04_snap');
+await at(word('v04_snap', 'sample') - 0.6);
+await moveToEl(page.getByRole('button', { name: /Try Sample Puzzle/ }).first(), 0.7);
 await click();
 await page.getByText('Found 16 pieces').waitFor();
-await at(word('s03_scan', 'outlines') - 0.4);
+await at(word('v04_snap', 'outlines') - 0.4);
 const t7 = await tagOnPhoto('07');
 await moveTo(t7.x, t7.y, 0.9);
-await at(word('s03_scan', 'number'));
+await at(word('v04_snap', 'number'));
 await click();
-await at(length('s03_scan'));
+await at(length('v04_snap'));
 
 // ---------------- s06: solve, evidence, fits ----------------
 await page.keyboard.press('Escape');
 await moveToEl(page.getByRole('button', { name: /Find Matches/ }), 0.6);
 await sleep(0.3);
-begin('s06_solve');
+begin('v06_find');
 await click();
 await page.getByText(/Option 1 of/).waitFor();
-await at(word('s06_solve', 'amber') - 0.5);
+await at(word('v06_find', 'tap') - 1.0);
 const chip = page.getByRole('button', { name: /Some edges need a closer look/ });
 await moveToEl(chip, 0.7);
-await at(word('s06_solve', 'tap'));
+await at(word('v06_find', 'tap'));
 await click();
 await sleep(0.5);
-await at(word('s06_solve', 'evidence'));
+await at(word('v06_find', 'why'));
 await page.getByRole('button', { name: /^Fits$/ }).first().evaluate((el) => el.closest('li').scrollIntoView({ behavior: 'smooth', block: 'center' }));
 await sleep(0.9);
-await at(word('s06_solve', 'say') - 0.3);
+await at(word('v06_find', 'stay') - 0.3);
 const fits = page.getByRole('button', { name: /^Fits$/ }).first();
 await moveToEl(fits, 0.8);
-await at(word('s06_solve', 'fit'));
+await at(word('v06_find', 'confirm'));
 await click();
-await at(word('s06_solve', 'rule') + 0.5);
+await at(word('v06_find', 'adjust'));
 await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
-await at(length('s06_solve'));
+await at(length('v06_find'));
 
 // off camera: go to the guide
 await page.getByRole('button', { name: /Start Assembling/ }).click();
@@ -153,14 +153,14 @@ await page.getByText(/Step 1 of/).filter({ visible: true }).first().waitFor();
 await sleep(1.2);
 
 // ---------------- s08: guide ----------------
-begin('s08_guide');
+begin('v07_place');
 const findLabel = (await page.getByRole('heading', { level: 1 }).first().textContent()).match(/#(\d+)/)[1];
-await at(word('s08_guide', 'shows'));
+await at(word('v07_place', 'which') - 0.3);
 const tp = await tagOnPhoto(findLabel);
 await moveTo(tp.x, tp.y, 0.8);
-await at(word('s08_guide', 'where'));
+await at(word('v07_place', 'where'));
 await moveToEl(page.locator('[aria-label="Puzzle board, 4 rows by 4 columns"] button[aria-label]').filter({ has: page.locator('span') }).first(), 0.7);
-await at(word('s08_guide', 'mark') - 0.6);
+await at(word('v07_place', 'mark') - 0.6);
 await moveToEl(page.getByRole('button', { name: /Set assembly area/ }), 0.6);
 await click();
 const meta = await (await page.request.get(BASE + '/sample/sample-4x4/meta.json')).json();
@@ -170,18 +170,18 @@ for (let i = 0; i < 4; i++) {
 	await moveTo(s.x, s.y, 0.32);
 	await click();
 }
-await at(word('s08_guide', 'new') - 0.5);
+await at(word('v07_place', 'new') - 0.5);
 await moveToEl(page.getByRole('button', { name: /Check Placement/ }), 0.6);
-await at(word('s08_guide', 'checks'));
+await at(word('v07_place', 'checks'));
 await click();
-await at(word('s08_guide', 'if') - 0.2);
+await at(word('v07_place', 'or') - 0.2);
 await moveToEl(page.getByRole('button', { name: /^I placed it$/ }).first(), 0.7);
-await at(word('s08_guide', 'confirm'));
+await at(word('v07_place', 'confirm'));
 await click();
-await at(length('s08_guide'));
+await at(length('v07_place'));
 
 // ---------------- s09: finish ----------------
-begin('s09_finish');
+begin('v08_finish');
 await sleep(0.4);
 for (let i = 0; i < 80; i++) {
 	if (page.url().includes('/done')) break;
@@ -197,9 +197,9 @@ for (let i = 0; i < 80; i++) {
 }
 await page.screenshot({ path: join(OUT, 'debug.png') });
 await page.waitForURL(/done/);
-await at(word('s09_finish', 'download') - 0.4);
+await at(length('v08_finish') - 2.2);
 await moveToEl(page.getByRole('button', { name: /Download assembled.png/ }), 0.7);
-await at(length('s09_finish') + 0.5);
+await at(length('v08_finish') + 0.5);
 
 await page.close();
 await ctx.close();

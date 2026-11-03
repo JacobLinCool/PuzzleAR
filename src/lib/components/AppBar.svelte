@@ -48,7 +48,7 @@
 							</a>
 						{:else}
 							<span class="flex items-center gap-1.5 rounded-full py-1 pr-2.5 pl-1 font-medium {state === 'current' ? 'bg-surface border-line border' : ''}" aria-current={state === 'current' ? 'step' : undefined}>
-								<span class="tabular grid size-5 place-items-center rounded-full text-[11px] font-semibold {state === 'current' ? 'bg-ink text-white' : 'border-line-strong text-muted border'}">{n}</span>
+								<span class="tabular grid size-5 place-items-center rounded-full text-[11px] badge-num font-semibold {state === 'current' ? 'bg-ink text-white' : 'border-line-strong text-muted border'}">{n}</span>
 								<span class={state === 'current' ? 'text-ink' : 'text-muted'}>{s}</span>
 								{#if state === 'current'}<span class="text-muted sm:hidden">· {n} of 4</span>{/if}
 							</span>

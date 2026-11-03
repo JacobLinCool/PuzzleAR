@@ -5,8 +5,8 @@ test('sample puzzle: scan, solve, guide, verify, finish, delete', async ({ page 
 	page.on('pageerror', (e) => errors.push(e.message));
 
 	await page.goto('/');
-	await expect(page.getByRole('heading', { level: 1 })).toContainText('pieces that don');
-	await page.getByRole('button', { name: /Try Sample Puzzle/ }).click();
+	await expect(page.getByRole('heading', { level: 1 })).toContainText('Find your next piece');
+	await page.getByRole('button', { name: /Try Sample Puzzle/ }).first().click();
 
 	await page.waitForURL(/\/review$/);
 	await expect(page.getByText('Found 16 pieces')).toBeVisible({ timeout: 20_000 });
@@ -57,7 +57,7 @@ test('sample puzzle: scan, solve, guide, verify, finish, delete', async ({ page 
 
 test('sessions are private to the browser that created them', async ({ page, browser }) => {
 	await page.goto('/');
-	await page.getByRole('button', { name: /Try Sample Puzzle/ }).click();
+	await page.getByRole('button', { name: /Try Sample Puzzle/ }).first().click();
 	await page.waitForURL(/\/review$/);
 	const url = page.url();
 	const other = await browser.newContext();

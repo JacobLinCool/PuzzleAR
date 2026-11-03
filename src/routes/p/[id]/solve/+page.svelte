@@ -273,7 +273,7 @@
 						<div class="text-muted mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[0.75rem]">
 							<span class="flex items-center gap-1.5"><span class="bg-teal h-0.5 w-4 rounded"></span>Strong candidate</span>
 							<span class="flex items-center gap-1.5"><span class="border-amber h-0 w-4 border-t-2 border-dashed"></span>Needs a check</span>
-							<span class="flex items-center gap-1.5"><span class="bg-verified h-0.5 w-4 rounded"></span>Human-confirmed</span>
+							<span class="flex items-center gap-1.5"><span class="bg-verified h-0.5 w-4 rounded"></span>Confirmed by you</span>
 						</div>
 					{/if}
 					{#if solving && cand}

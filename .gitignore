@@ -149,3 +149,5 @@ worker-configuration.d.ts
 
 # real user photos used for local debugging only
 /fixtures-private
+
+.DS_Store

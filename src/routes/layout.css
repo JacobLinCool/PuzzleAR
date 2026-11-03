@@ -88,6 +88,13 @@
 	}
 }
 
+/* Digits inside small badges: trim the line box to the cap height so the
+   number sits in the optical centre in every engine (WebKit included). */
+@utility badge-num {
+	line-height: 1;
+	text-box: trim-both cap alphabetic;
+}
+
 @utility tabular {
 	font-variant-numeric: tabular-nums;
 }

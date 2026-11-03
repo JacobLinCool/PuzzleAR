@@ -627,7 +627,7 @@
 								{#each selectedGeom.sides as s, k (k)}
 									{@const chosen = selected.sideTypes?.[k]}
 									<li class="flex items-center gap-2">
-										<span class="tabular grid size-7 shrink-0 place-items-center rounded-full text-[0.75rem] font-bold text-white" style="background:{sideColor[chosen ?? s.type]}">{k + 1}</span>
+										<span class="tabular grid size-7 shrink-0 place-items-center rounded-full text-[0.75rem] badge-num font-bold text-white" style="background:{sideColor[chosen ?? s.type]}">{k + 1}</span>
 										<div class="border-line bg-ground-deep/60 grid flex-1 grid-cols-3 gap-0.5 rounded-[10px] border p-0.5" role="radiogroup" aria-label="Side {k + 1} shape">
 											{#each ['flat', 'tab', 'socket'] as const as opt (opt)}
 												{@const on = (chosen ?? s.type) === opt}

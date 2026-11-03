@@ -35,7 +35,7 @@ def tag_png(path):
         f = ImageFont.truetype("/System/Library/Fonts/SFNS.ttf", 26)
     except OSError:
         f = ImageFont.load_default()
-    text = "Real app  ·  puzzlear.jacob.workers.dev"
+    text = "Real app  ·  sample puzzle"
     tw = d.textlength(text, font=f)
     x, y, h = 32, H - 32 - 52, 52
     d.rounded_rectangle([x, y, x + tw + 64, y + h], radius=26, fill=(31, 42, 37, 220))
@@ -80,7 +80,7 @@ offset = 0.0
 for i in range(1, len(clips)):
     offset += lengths[i - 1]
     lab = f"x{i}"
-    trans = "fadeblack" if scenes[i]["name"] in ("s02_title", "s11_outro") else "fade"
+    trans = "fadeblack" if scenes[i]["name"] in ("v03_title", "v09_outro") else "fade"
     fc += f"[{prev}][{i}:v]xfade=transition={trans}:duration={X}:offset={offset - 0:.3f}[{lab}];"
     prev = lab
 total = sum(lengths)

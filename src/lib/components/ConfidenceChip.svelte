@@ -5,7 +5,7 @@
 	const meta = {
 		strong: { label: 'Strong candidate', cls: 'bg-teal-soft text-teal', icon: CircleDot },
 		check: { label: 'Needs a check', cls: 'bg-amber-soft text-amber-ink', icon: ScanSearch },
-		confirmed: { label: 'Human-confirmed', cls: 'bg-verified-soft text-verified', icon: BadgeCheck }
+		confirmed: { label: 'Confirmed by you', cls: 'bg-verified-soft text-verified', icon: BadgeCheck }
 	};
 	const m = $derived(meta[value]);
 </script>

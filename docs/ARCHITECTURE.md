@@ -79,3 +79,23 @@ SAM guard order: cache hit → one running request per session → 15 per sessio
 | FR-10 session/export/delete | Done; refresh restores, PNG + JSON export, delete makes photos unreadable |
 | FR-11 demo/deployment | Done; HTTPS on workers.dev, preprocessed sample plus live Meta run |
 | FR-12 video tracking (P1) | Not built |
+
+## Deploy
+
+Create the D1 database and R2 bucket named in `wrangler.jsonc`, then:
+
+```sh
+pnpm exec wrangler secret put MODEL_API_KEY
+pnpm exec wrangler r2 bucket lifecycle add puzzlear-sessions retention-24h sessions/ --expire-days 1
+pnpm deploy
+```
+
+Without `MODEL_API_KEY` the sample session still works and live scanning reports that the scanner is unavailable; it never falls back to fake results.
+
+## Cost
+
+Hosting fits Cloudflare's free tier (Workers, D1, R2, static assets). The metered cost is Meta SAM 3.1 at about US$0.0025 per image request. Each session may make 15 SAM requests per hour and each IP 60, and the Worker refuses new requests once the daily budget (`META_DAILY_BUDGET_USD`, default US$25) is reached. An identical repeated request is served from the stored response instead of being billed again.
+
+## Privacy
+
+Photos are resized on the device before upload, which drops location and camera metadata; the Worker also strips JPEG metadata segments. Photos and raw SAM responses are stored privately in R2 and served only to the browser holding the session cookie (`no-store`). Sessions expire after 24 hours and can be deleted at once. Check photos taken during assembly are compared in the browser and never uploaded.
