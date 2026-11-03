@@ -24,8 +24,9 @@ mkdirSync(join(BUILD, 'clips'), { recursive: true });
 
 async function setup(scene) {
 	const m = manifest[scene.name];
-	const duration = (m?.duration_s ?? 8) + 0.8 + scene.pad + 0.8;
-	await page.evaluate((o) => window.setup(o), { scene: scene.name, words: m?.words ?? [], lead: 0.8, duration });
+	const lead = sb.lead ?? 0.8;
+	const duration = (m?.duration_s ?? 8) + lead + scene.pad + (sb.crossfade ?? 0.6) + 0.2;
+	await page.evaluate((o) => window.setup(o), { scene: scene.name, words: m?.words ?? [], lead, duration });
 	return duration;
 }
 

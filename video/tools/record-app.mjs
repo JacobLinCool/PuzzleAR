@@ -10,8 +10,8 @@ import { chromium } from 'playwright';
 const ROOT = join(import.meta.dirname, '../..');
 const OUT = join(ROOT, 'video/build/app');
 const BASE = process.env.BASE ?? 'https://puzzlear.jacob.workers.dev';
-const LEAD = 0.8;
 const sb = JSON.parse(readFileSync(join(ROOT, 'video/storyboard.json'), 'utf8'));
+const LEAD = sb.lead ?? 0.8;
 const man = JSON.parse(readFileSync(join(ROOT, 'video/build/narration/manifest.json'), 'utf8'));
 const W = 1600, H = 900;
 mkdirSync(OUT, { recursive: true });
@@ -102,7 +102,7 @@ function begin(name) {
 	marks[name] = sceneStart;
 	console.log('scene', name, sceneStart.toFixed(2));
 }
-const length = (name) => LEAD + man[name].duration_s + sb.scenes.find((s) => s.name === name).pad + 0.8;
+const length = (name) => LEAD + man[name].duration_s + sb.scenes.find((s) => s.name === name).pad + (sb.crossfade ?? 0.6) + 0.2;
 
 // ---------------- s03: landing -> sample -> review ----------------
 await page.goto(BASE + '/');

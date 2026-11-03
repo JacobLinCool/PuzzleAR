@@ -7,23 +7,62 @@
   "max_word_error_rate": 0.05,
   "max_attempts": 4,
   "scenes": [
-    { "name": "v01_payoff", "kind": "anim", "pad": 1.4,
-      "narration": "Pick up piece number ten. It goes right here, in the top left corner. Now number eight, right beside it. One photo of your table, and your next piece is always clear." },
-    { "name": "v02_stuck", "kind": "anim", "pad": 1.0,
-      "narration": "You want the satisfaction of finishing a puzzle yourself. But sometimes you search the same pile again and again. Most helpers need the box image, or a scan of every piece. Puzzle A R starts from one photo of your table." },
-    { "name": "v03_title", "kind": "anim", "pad": 1.4,
-      "narration": "Puzzle A R. Snap a photo, find your next piece, and place it with guidance." },
-    { "name": "v04_snap", "kind": "app", "pad": 1.4,
-      "narration": "Here is the real app, with a sample puzzle. Meta's Segment Anything model outlines every piece and gives it a number you can find on the table." },
-    { "name": "v05_meta", "kind": "anim", "pad": 1.2,
-      "narration": "Meta SAM three point one helps Puzzle A R see individual pieces. Our matching engine compares the shape and colors of every edge to find possible fits, and visual guidance helps you act on them." },
-    { "name": "v06_find", "kind": "app", "pad": 1.4,
-      "narration": "Puzzle A R suggests where every piece belongs, using the real pieces from your photo. Tap a spot to see why a piece fits. You stay in control: confirm what works, and the next steps adjust around it." },
-    { "name": "v07_place", "kind": "app", "pad": 1.4,
-      "narration": "Then it shows which piece to pick up, and where it goes, drawn right on your table. Mark the empty area once to see a ghost of the piece in its spot. A new photo checks the move, or you can confirm by hand." },
-    { "name": "v08_finish", "kind": "app", "pad": 4.0,
-      "narration": "Step by step the picture comes together, and any move can be undone." },
-    { "name": "v09_outro", "kind": "anim", "pad": 2.6,
-      "narration": "Puzzle A R. Find your next piece, and keep the joy of puzzling." }
-  ]
+    {
+      "name": "v01_payoff",
+      "kind": "anim",
+      "pad": 0.9,
+      "narration": "Pick up piece number ten. It goes right here, in the top left corner. Now number eight, right beside it. One photo of your table, and your next piece is always clear."
+    },
+    {
+      "name": "v02_stuck",
+      "kind": "anim",
+      "pad": 0.5,
+      "narration": "You want the satisfaction of finishing a puzzle yourself. But sometimes you search the same pile again and again. Most helpers need the box image, or a scan of every piece. Puzzle A R starts from one photo of your table."
+    },
+    {
+      "name": "v03_title",
+      "kind": "anim",
+      "pad": 0.7,
+      "narration": "Puzzle A R. Snap a photo, find your next piece, and place it with guidance."
+    },
+    {
+      "name": "v04_snap",
+      "kind": "app",
+      "pad": 0.6,
+      "narration": "Here is the real app, with a sample puzzle. Meta's Segment Anything model outlines every piece and gives it a number you can find on the table."
+    },
+    {
+      "name": "v05_meta",
+      "kind": "anim",
+      "pad": 0.6,
+      "narration": "Meta SAM three point one helps Puzzle A R see individual pieces. Our matching engine compares the shape and colors of every edge to find possible fits, and visual guidance helps you act on them."
+    },
+    {
+      "name": "v06_find",
+      "kind": "app",
+      "pad": 0.6,
+      "narration": "Puzzle A R suggests where every piece belongs, using the real pieces from your photo. Tap a spot to see why a piece fits. You stay in control: confirm what works, and the next steps adjust around it."
+    },
+    {
+      "name": "v07_place",
+      "kind": "app",
+      "pad": 0.6,
+      "narration": "Then it shows which piece to pick up, and where it goes, drawn right on your table. Mark the empty area once to see a ghost of the piece in its spot. A new photo checks the move, or you can confirm by hand."
+    },
+    {
+      "name": "v08_finish",
+      "kind": "app",
+      "pad": 3.2,
+      "narration": "Step by step the picture comes together, and any move can be undone."
+    },
+    {
+      "name": "v09_outro",
+      "kind": "anim",
+      "pad": 2.0,
+      "narration": "Puzzle A R. Find your next piece, and keep the joy of puzzling."
+    }
+  ],
+  "tempo": 1.12,
+  "lead": 0.45,
+  "crossfade": 0.5
 }

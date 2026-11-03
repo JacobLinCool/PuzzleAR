@@ -4,7 +4,7 @@
 
 PuzzleAR turns a photo of your scattered pieces into step-by-step help, without the box image.
 
-**Try it:** https://puzzlear.jacob.workers.dev · **Demo video:** [`video/out/puzzlear-demo.mp4`](video/out/puzzlear-demo.mp4)
+**Try it:** https://puzzlear.jacob.workers.dev · **Demo video:** https://youtu.be/476nt5J34ro
 
 ## The moment it helps
 

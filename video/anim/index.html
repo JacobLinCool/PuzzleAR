@@ -145,14 +145,7 @@ SCENES.v02_stuck = SCENES.s01_hook = {
 	},
 	update(t) {
 		this.pieces.forEach(({ g, pose, i }) => {
-			const st = 0.15 + i * 0.09;
-			const k = prog(t, st, 0.9, back);
-			const fall = (1 - k) * -260;
-			const rot = pose.theta * 57.2958 + (1 - k) * (i % 2 ? 40 : -40);
-			const sc = 1 + (1 - easeOut((t - st) / 0.9)) * 0.25;
-			const p = DATA.pieces[i];
-			g.setAttribute('transform', `translate(${pose.x} ${pose.y + fall}) rotate(${rot}) scale(${sc})`);
-			g.setAttribute('opacity', clamp((t - st) / 0.25));
+			g.setAttribute('transform', `translate(${pose.x} ${pose.y}) rotate(${pose.theta * 57.2958})`);
 		});
 		const tOb = W('satisfaction', 2.2), tSt = W('again', 5.2), tBox = W('box image', 7.5) - 0.3, tScan = W('scan', 9.5) - 0.3, tOne = W('starts from', 12) - 0.2;
 		this.obvious.forEach(({ o }) => o.setAttribute('opacity', prog(t, tOb - .2, .5) * (1 - prog(t, tBox - .4, .4))));
@@ -505,16 +498,14 @@ SCENES.v09_outro = SCENES.s11_outro = {
 		const k = prog(t, 0.1, 1.8, easeInOut);
 		const s0 = 0.42, s1 = 0.95;
 		this.pieces.forEach(({ g, p, pose }, i) => {
-			const kk = prog(t, 0.05 + i * 0.03, 1.6, easeInOut);
-			const sx = 60 + pose.x * s0, sy = 160 + pose.y * s0;
-			const tx = 170 + (p.col + .5) * 150 * s1, ty = 255 + (p.row + .5) * 150 * s1;
-			const rot = lerp(pose.theta * 57.2958, 0, kk);
-			g.setAttribute('transform', `translate(${lerp(sx, tx, kk)} ${lerp(sy, ty, kk)}) rotate(${rot}) scale(${lerp(s0, s1, kk)})`);
+			const kk = prog(t, 0.1, 1.0, easeInOut);
+			const sx = 660 + (p.col + .5) * 150 * s1, tx = 170 + (p.col + .5) * 150 * s1, ty = 255 + (p.row + .5) * 150 * s1;
+			g.setAttribute('transform', `translate(${lerp(sx, tx, kk)} ${ty}) scale(${s1})`);
 		});
 		void k;
 		const tl = W('find', 1.6);
-		this.logo.g.setAttribute('opacity', prog(t, 1.2, .5));
-		this.name.setAttribute('opacity', prog(t, 1.3, .5));
+		this.logo.g.setAttribute('opacity', prog(t, 0.8, .5));
+		this.name.setAttribute('opacity', prog(t, 0.9, .5));
 		this.tag.setAttribute('opacity', prog(t, tl, .6));
 		this.url.setAttribute('opacity', prog(t, tl + 1.2, .5));
 		this.meta.setAttribute('opacity', prog(t, tl + 1.6, .5));
@@ -557,10 +548,11 @@ SCENES.v01_payoff = {
 			const p = DATA.pieces[st.idx];
 			const cx = (p.col + .5) * 150, cy = (p.row + .5) * 150;
 			const g = $('g', { opacity: 0 }, this.table);
-			$('path', { d: pathOf(p.outline), fill: 'none', stroke: '#fff', 'stroke-width': 7, transform: `translate(${-cx} ${-cy})` }, g);
-			const tag = $('g', { transform: 'translate(0 -150)' }, g);
-			$('rect', { x: -58, y: -34, width: 116, height: 68, rx: 16, fill: '#fff' }, tag);
-			$('text', { y: 16, 'text-anchor': 'middle', 'font-size': 44, 'font-weight': 700, fill: '#24312d', text: '#' + st.label }, tag);
+			$('path', { d: pathOf(p.outline), fill: '#2fb39f', 'fill-opacity': .22, stroke: '#2fb39f', 'stroke-width': 26, 'stroke-opacity': .55, 'stroke-linejoin': 'round', transform: `translate(${-cx} ${-cy})` }, g);
+			$('path', { d: pathOf(p.outline), fill: 'none', stroke: '#fff', 'stroke-width': 9, 'stroke-linejoin': 'round', transform: `translate(${-cx} ${-cy})` }, g);
+			const tag = $('g', { transform: 'translate(0 -165)' }, g);
+			$('rect', { x: -92, y: -52, width: 184, height: 104, rx: 26, fill: '#167A6B', filter: 'url(#softshadow)' }, tag);
+			$('text', { y: 24, 'text-anchor': 'middle', 'font-size': 68, 'font-weight': 750, fill: '#fff', text: '#' + st.label }, tag);
 			return g;
 		});
 		this.caption = $('g', { opacity: 0 }, root);
@@ -592,10 +584,10 @@ SCENES.v01_payoff = {
 		this.steps.forEach((st, k) => {
 			const pose = DATA.poses[st.idx];
 			const on = prog(t, tPick[k] - 0.2, 0.3) * (1 - prog(t, tGo[k] + 0.1, 0.3));
-			const pulse = 0.75 + 0.25 * Math.sin(t * 7);
+			const pulse = 0.88 + 0.12 * Math.sin(t * 6);
 			this.rings[k].setAttribute('opacity', on * pulse);
 			this.rings[k].setAttribute('transform', `translate(${pose.x} ${pose.y}) rotate(${pose.theta * 57.2958})`);
-			this.rings[k].lastChild.setAttribute('transform', `rotate(${-pose.theta * 57.2958}) translate(0 -150)`);
+			this.rings[k].lastChild.setAttribute('transform', `rotate(${-pose.theta * 57.2958}) translate(0 -165)`);
 			this.ghosts[k].setAttribute('opacity', prog(t, tGo[k] - 0.4, 0.3) * (1 - prog(t, tGo[k] + 1.3, 0.3)));
 		});
 		const which = t < tPick[1] - 0.3 ? 0 : 1;
@@ -670,10 +662,10 @@ SCENES.v05_meta = {
 			const x = Number(g.getAttribute('transform').match(/translate\((\d+)/)[1]);
 			g.setAttribute('transform', `translate(${x} ${250 + (1 - clamp(k)) * 30})`);
 		};
-		show(this.p1, t1 - 0.6);
+		show(this.p1, 0);
 		show(this.p2, t2);
 		show(this.p3, t3);
-		this.outlines.forEach((o, i) => o.setAttribute('opacity', prog(t, t1 - 0.4 + i * 0.07, 0.25)));
+		this.outlines.forEach((o, i) => o.setAttribute('opacity', prog(t, Math.min(t1 - 0.4, 0.6) + i * 0.07, 0.25)));
 		this.arrows[0].setAttribute('opacity', prog(t, t2 - 0.3, 0.4));
 		this.arrows[1].setAttribute('opacity', prog(t, t3 - 0.3, 0.4));
 		const ks = prog(t, t2 + 0.6, 1.6, easeInOut);

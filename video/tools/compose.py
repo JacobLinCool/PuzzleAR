@@ -13,11 +13,12 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 B = os.path.join(ROOT, "video/build")
 OUT = os.path.join(ROOT, "video/out")
-LEAD, X, FPS = 0.8, 0.6, 30
+FPS = 30
 os.makedirs(os.path.join(B, "norm"), exist_ok=True)
 os.makedirs(OUT, exist_ok=True)
 
 sb = json.load(open(os.path.join(ROOT, "video/storyboard.json")))
+LEAD, X = sb.get("lead", 0.8), sb.get("crossfade", 0.6)
 man = json.load(open(os.path.join(B, "narration/manifest.json")))
 marks = json.load(open(os.path.join(B, "app/marks.json")))
 
@@ -80,7 +81,7 @@ offset = 0.0
 for i in range(1, len(clips)):
     offset += lengths[i - 1]
     lab = f"x{i}"
-    trans = "fadeblack" if scenes[i]["name"] in ("v03_title", "v09_outro") else "fade"
+    trans = "fadeblack" if scenes[i]["name"] == "v03_title" else "fade"
     fc += f"[{prev}][{i}:v]xfade=transition={trans}:duration={X}:offset={offset - 0:.3f}[{lab}];"
     prev = lab
 total = sum(lengths)

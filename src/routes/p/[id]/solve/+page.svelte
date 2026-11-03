@@ -237,13 +237,13 @@
 		{/if}
 
 		<div class="mt-4 grid gap-5 lg:grid-cols-2">
-			<section aria-labelledby="scanned-h" class="min-w-0">
+			<section aria-labelledby="scanned-h" class="min-w-0 lg:sticky lg:top-[4.5rem] lg:self-start">
 				<h2 id="scanned-h" class="label mb-2">Scanned pieces</h2>
 				<PhotoStage
 					src={doc.photo?.url}
 					width={doc.photo?.width ?? 1600}
 					height={doc.photo?.height ?? 1200}
-					class="lg:h-[calc(100vh-13rem)]"
+					class="lg:h-[calc(100vh-7.5rem)]"
 					dim={!!selPiece}
 				>
 					<PieceOverlay items={overlay()} />
