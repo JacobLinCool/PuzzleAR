@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>PuzzleAR explainer scenes</title>
+<style>
+	@font-face {
+		font-family: 'Inter';
+		src: url('/node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2');
+		font-weight: 100 900;
+	}
+	html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #f7f5f0; }
+	svg { display: block; font-family: Inter, sans-serif; font-feature-settings: 'cv11', 'ss01'; }
+	.ink { fill: #24312d; }
+	.muted { fill: #6a7770; }
+</style>
+</head>
+<body>
+<svg id="stage" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<defs>
+		<filter id="paper" x="0" y="0" width="100%" height="100%">
+			<feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="4" />
+			<feColorMatrix values="0 0 0 0 .35 0 0 0 0 .3 0 0 0 0 .2 0 0 0 .07 0" />
+		</filter>
+		<filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+			<feDropShadow dx="3" dy="6" stdDeviation="6" flood-color="#000" flood-opacity=".45" />
+		</filter>
+		<filter id="softshadow" x="-30%" y="-30%" width="160%" height="160%">
+			<feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#24312d" flood-opacity=".18" />
+		</filter>
+	</defs>
+	<g id="root"></g>
+</svg>
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+const $ = (tag, attrs = {}, parent) => {
+	const el = document.createElementNS(NS, tag);
+	for (const [k, v] of Object.entries(attrs)) {
+		if (k === 'text') el.textContent = v;
+		else if (k === 'href') el.setAttributeNS('http://www.w3.org/1999/xlink', 'href', v), el.setAttribute('href', v);
+		else el.setAttribute(k, v);
+	}
+	if (parent) parent.appendChild(el);
+	return el;
+};
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const easeOut = (x) => 1 - Math.pow(1 - clamp(x), 3);
+const easeInOut = (x) => { x = clamp(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const back = (x) => { x = clamp(x); const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const prog = (t, t0, d, e = easeOut) => e((t - t0) / d);
+const lerp = (a, b, k) => a + (b - a) * k;
+const pathOf = (pts) => pts.map((p, i) => `${i ? 'L' : 'M'}${p[0]} ${p[1]}`).join('') + 'Z';
+const polyOf = (pts) => pts.map((p) => `${p[0]},${p[1]}`).join(' ');
+
+let DATA, WORDS = [], LEAD = 0.8, DUR = 10;
+/** Scene-time of the start of a spoken phrase (falls back to `fb`). */
+function W(phrase, fb = 0, occ = 0) {
+	const toks = phrase.toLowerCase().split(/\s+/);
+	const norm = (s) => s.toLowerCase().replace(/[^a-z0-9']/g, '');
+	let seen = 0;
+	for (let i = 0; i + toks.length <= WORDS.length; i++) {
+		if (toks.every((tk, k) => norm(WORDS[i + k].text) === norm(tk))) {
+			if (seen++ === occ) return LEAD + WORDS[i].start;
+		}
+	}
+	return fb;
+}
+
+function paperBg(g) {
+	$('rect', { width: 1920, height: 1080, fill: '#f7f5f0' }, g);
+	$('rect', { width: 1920, height: 1080, filter: 'url(#paper)' }, g);
+}
+
+function pieceArt(parent, p, id, opts = {}) {
+	// a jigsaw piece cut from the artwork, origin at the piece's cell centre
+	const cx = (p.col + 0.5) * DATA.cell, cy = (p.row + 0.5) * DATA.cell;
+	const g = $('g', {}, parent);
+	const clip = $('clipPath', { id }, g);
+	$('path', { d: pathOf(p.outline), transform: `translate(${-cx} ${-cy})` }, clip);
+	const inner = $('g', { 'clip-path': `url(#${id})` }, g);
+	$('image', { href: 'assets/art.png', x: -cx, y: -cy, width: 600, height: 600 }, inner);
+	$('path', { d: pathOf(p.outline), transform: `translate(${-cx} ${-cy})`, fill: 'none', stroke: 'rgba(255,250,235,.55)', 'stroke-width': opts.bevel ?? 1.6 }, g);
+	return g;
+}
+
+const SCENES = {};
+
+/* ---------- 1. Hook: pieces tip onto the table ---------- */
+SCENES.s01_hook = {
+	build(root) {
+		const s = 1920 / 2048;
+		const table = $('g', { transform: `translate(0 ${-(1536 * s - 1080) / 2}) scale(${s})` }, root);
+		$('image', { href: 'assets/background.jpg', width: 2048, height: 1536 }, table);
+		this.pieces = DATA.pieces.map((p, i) => {
+			const g = $('g', { filter: 'url(#shadow)' }, table);
+			pieceArt(g, p, 'h' + i);
+			return { g, pose: DATA.poses[i], i };
+		});
+		this.marks = DATA.pieces.map((p, i) => {
+			const pose = DATA.poses[i];
+			const m = $('g', { opacity: 0 }, table);
+			$('circle', { cx: pose.x, cy: pose.y, r: 34, fill: '#24312d', 'fill-opacity': .82 }, m);
+			$('text', { x: pose.x, y: pose.y + 15, 'text-anchor': 'middle', 'font-size': 44, 'font-weight': 700, fill: '#f3c27a', text: '?' }, m);
+			return m;
+		});
+		this.obvious = [0, 3].map((i) => {
+			const p = DATA.pieces.find((q) => q.row === (i ? 0 : 3) && q.col === i);
+			const idx = DATA.pieces.indexOf(p);
+			const pose = DATA.poses[idx];
+			const cx = (p.col + .5) * 150, cy = (p.row + .5) * 150;
+			const o = $('path', { d: pathOf(p.outline), fill: 'none', stroke: '#9ff0e2', 'stroke-width': 6, opacity: 0, transform: `translate(${pose.x} ${pose.y}) rotate(${pose.theta * 57.2958}) translate(${-cx} ${-cy})` }, table);
+			return { o, idx };
+		});
+		// overlay cards
+		this.dim = $('rect', { width: 1920, height: 1080, fill: '#1b2420', opacity: 0 }, root);
+		const card = (x, title, draw) => {
+			const g = $('g', { opacity: 0 }, root);
+			$('rect', { x, y: 260, width: 520, height: 470, rx: 28, fill: '#fff', filter: 'url(#softshadow)' }, g);
+			draw(g, x);
+			$('text', { x: x + 260, y: 690, 'text-anchor': 'middle', 'font-size': 34, 'font-weight': 600, class: 'ink', text: title }, g);
+			const strike = $('line', { x1: x + 40, y1: 300, x2: x + 480, y2: 640, stroke: '#B74444', 'stroke-width': 14, 'stroke-linecap': 'round', 'stroke-dasharray': 600, 'stroke-dashoffset': 600 }, g);
+			return { g, strike };
+		};
+		this.box = card(330, 'The box image', (g, x) => {
+			$('rect', { x: x + 90, y: 320, width: 340, height: 300, rx: 10, fill: '#167A6B' }, g);
+			$('image', { href: 'assets/art.png', x: x + 110, y: 340, width: 300, height: 260, preserveAspectRatio: 'xMidYMid slice' }, g);
+		});
+		this.scan = card(1070, 'A scan of every piece', (g, x) => {
+			for (let k = 0; k < 12; k++) {
+				const r = Math.floor(k / 4), c = k % 4;
+				const p = DATA.pieces[k];
+				const holder = $('g', { transform: `translate(${x + 115 + c * 98} ${352 + r * 92}) scale(.42)` }, g);
+				pieceArt(holder, p, 'sc' + k, { bevel: 0 });
+			}
+		});
+		// phone frame
+		this.phone = $('g', { opacity: 0 }, root);
+		$('rect', { x: 150, y: 50, width: 1620, height: 980, rx: 70, fill: 'none', stroke: '#24312d', 'stroke-width': 26 }, this.phone);
+		$('rect', { x: 150, y: 50, width: 1620, height: 980, rx: 70, fill: 'none', stroke: '#e9e5dc', 'stroke-width': 8 }, this.phone);
+		$('circle', { cx: 1712, cy: 540, r: 48, fill: '#fff', stroke: '#24312d', 'stroke-width': 8 }, this.phone);
+		this.flash = $('rect', { width: 1920, height: 1080, fill: '#fff', opacity: 0 }, root);
+		this.label = $('g', { opacity: 0 }, root);
+		$('rect', { x: 760, y: 900, width: 400, height: 84, rx: 42, fill: '#167A6B' }, this.label);
+		$('text', { x: 960, y: 955, 'text-anchor': 'middle', 'font-size': 38, 'font-weight': 650, fill: '#fff', text: 'One photo. That’s it.' }, this.label);
+	},
+	update(t) {
+		this.pieces.forEach(({ g, pose, i }) => {
+			const st = 0.15 + i * 0.09;
+			const k = prog(t, st, 0.9, back);
+			const fall = (1 - k) * -260;
+			const rot = pose.theta * 57.2958 + (1 - k) * (i % 2 ? 40 : -40);
+			const sc = 1 + (1 - easeOut((t - st) / 0.9)) * 0.25;
+			const p = DATA.pieces[i];
+			g.setAttribute('transform', `translate(${pose.x} ${pose.y + fall}) rotate(${rot}) scale(${sc})`);
+			g.setAttribute('opacity', clamp((t - st) / 0.25));
+		});
+		const tOb = W('obvious', 3.8), tSt = W('stare', 5.2), tBox = W('box image', 7.5) - 0.3, tScan = W('clean scan', 9.5) - 0.3, tOne = W('only needs', 12) - 0.2;
+		this.obvious.forEach(({ o }) => o.setAttribute('opacity', prog(t, tOb - .2, .5) * (1 - prog(t, tBox - .4, .4))));
+		this.marks.forEach((m, i) => {
+			const isOb = this.obvious.some((x) => x.idx === i);
+			const k = isOb ? 0 : prog(t, tSt + (i % 7) * 0.08, .4, back);
+			m.setAttribute('opacity', k * (1 - prog(t, tBox - .4, .4)));
+		});
+		this.dim.setAttribute('opacity', 0.55 * prog(t, tBox - .4, .5) * (1 - prog(t, tOne, .5)));
+		const showCard = (c, t0, ts) => {
+			c.g.setAttribute('opacity', prog(t, t0, .45) * (1 - prog(t, tOne, .4)));
+			c.g.setAttribute('transform', `translate(0 ${(1 - prog(t, t0, .6)) * 40})`);
+			c.strike.setAttribute('stroke-dashoffset', 600 * (1 - prog(t, ts, .45)));
+		};
+		showCard(this.box, tBox, tScan - .2);
+		showCard(this.scan, tScan, tOne - .5);
+		const kp = prog(t, tOne + .1, .7, easeInOut);
+		this.phone.setAttribute('opacity', kp);
+		this.phone.setAttribute('transform', `translate(960 540) scale(${lerp(1.15, 1, kp)}) translate(-960 -540)`);
+		const fl = t - (tOne + 0.95);
+		this.flash.setAttribute('opacity', fl > 0 ? Math.max(0, 0.85 - fl * 2.4) : 0);
+		this.label.setAttribute('opacity', prog(t, tOne + 1.1, .4));
+	}
+};
+
+/* ---------- 2. Title ---------- */
+function logo(parent, x, y, s) {
+	const g = $('g', { transform: `translate(${x} ${y}) scale(${s})` }, parent);
+	const r = $('rect', { width: 32, height: 32, rx: 8, fill: '#167A6B' }, g);
+	const p = $('path', { d: 'M8 9h5.2a3 3 0 1 1 5.6 0H24v5.2a3 3 0 1 0 0 5.6V25h-5.2a3 3 0 1 1-5.6 0H8v-5.2a3 3 0 1 1 0-5.6z', fill: 'none', stroke: '#F7F5F0', 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-dasharray': 90, 'stroke-dashoffset': 90 }, g);
+	return { g, r, p };
+}
+SCENES.s02_title = {
+	build(root) {
+		paperBg(root);
+		this.logo = logo(root, 960 - 90, 250, 5.6);
+		this.name = $('text', { x: 960, y: 590, 'text-anchor': 'middle', 'font-size': 120, 'font-weight': 650, 'letter-spacing': -4, class: 'ink', text: 'PuzzleAR' }, root);
+		this.tags = ['See the pieces.', 'Find the fit.', 'Finish it together.'].map((txt, i) => $('text', { x: 960 + (i - 1) * 470, y: 740, 'text-anchor': 'middle', 'font-size': 52, 'font-weight': 550, fill: i === 2 ? '#167A6B' : '#24312d', text: txt, opacity: 0 }, root));
+		this.foot = $('text', { x: 960, y: 900, 'text-anchor': 'middle', 'font-size': 28, class: 'muted', text: 'Physical jigsaw assistant · powered by Meta SAM 3.1', opacity: 0 }, root);
+	},
+	update(t) {
+		const k = prog(t, 0.1, 0.6, back);
+		this.logo.g.setAttribute('transform', `translate(${960 - 90} ${250 + (1 - k) * 30}) scale(${5.6 * (0.85 + 0.15 * k)})`);
+		this.logo.g.setAttribute('opacity', clamp(t / 0.4));
+		this.logo.p.setAttribute('stroke-dashoffset', 90 * (1 - prog(t, 0.4, 1.2, easeInOut)));
+		this.name.setAttribute('opacity', prog(t, 0.6, .6));
+		const ts = [W('see', 1.6), W('find', 2.6), W('finish', 3.6)];
+		this.tags.forEach((el, i) => {
+			const kk = prog(t, ts[i], .5);
+			el.setAttribute('opacity', kk);
+			el.setAttribute('transform', `translate(0 ${(1 - kk) * 18})`);
+		});
+		this.foot.setAttribute('opacity', prog(t, ts[2] + 0.8, .6));
+	}
+};
+
+/* ---------- 4. Geometry of one piece ---------- */
+SCENES.s04_geometry = {
+	build(root) {
+		paperBg(root);
+		const f = DATA.featured;
+		const S = 2.9;
+		this.g = $('g', { transform: `translate(620 545) scale(${S})` }, root);
+		const clip = $('clipPath', { id: 'feat' }, this.g);
+		$('path', { d: pathOf(f.outline) }, clip);
+		this.photo = $('g', { 'clip-path': 'url(#feat)', filter: 'url(#softshadow)' }, this.g);
+		$('image', { href: 'assets/photo.jpg', x: -f.centroid[0], y: -f.centroid[1], width: 2048, height: 1536 }, this.photo);
+		const len = 1400;
+		this.contour = $('path', { d: pathOf(f.outline), fill: 'none', stroke: '#167A6B', 'stroke-width': 1.4, 'stroke-dasharray': len, 'stroke-dashoffset': len }, this.g);
+		const cq = f.corners;
+		this.quad = $('path', { d: pathOf(cq), fill: 'none', stroke: '#24312d', 'stroke-width': .8, 'stroke-dasharray': '3 3', opacity: 0 }, this.g);
+		const colors = { flat: '#6a7770', tab: '#167A6B', socket: '#B97720', unknown: '#B74444' };
+		this.sides = f.sides.map((s) => $('polyline', { points: polyOf(s.pts), fill: 'none', stroke: colors[s.type], 'stroke-width': 3, 'stroke-linecap': 'round', opacity: 0 }, this.g));
+		this.corners = cq.map((c, i) => {
+			const g = $('g', { transform: `translate(${c[0]} ${c[1]})`, opacity: 0 }, this.g);
+			$('circle', { r: 4.6, fill: '#fff', stroke: '#24312d', 'stroke-width': 1.6 }, g);
+			return g;
+		});
+		this.labels = f.sides.map((s, i) => {
+			const m = s.pts[Math.floor(s.pts.length / 2)];
+			const cx = m[0] * 1.38, cy = m[1] * 1.38;
+			const g = $('g', { transform: `translate(${cx} ${cy}) scale(${1 / S})`, opacity: 0 }, this.g);
+			const w = s.type.length * 17 + 40;
+			$('rect', { x: -w / 2, y: -26, width: w, height: 52, rx: 26, fill: colors[s.type] }, g);
+			$('text', { y: 11, 'text-anchor': 'middle', 'font-size': 30, 'font-weight': 650, fill: '#fff', text: s.type }, g);
+			return { g, type: s.type };
+		});
+		// steps list
+		const steps = ['Trace the contour', 'Find four true corners', 'Split into four sides', 'Tab, socket or flat'];
+		this.steps = steps.map((txt, i) => {
+			const g = $('g', { transform: `translate(1180 ${330 + i * 120})`, opacity: .25 }, root);
+			$('circle', { r: 30, fill: '#24312d' }, g);
+			$('text', { y: 11, 'text-anchor': 'middle', 'font-size': 30, 'font-weight': 700, fill: '#fff', text: String(i + 1) }, g);
+			$('text', { x: 60, y: 13, 'font-size': 44, 'font-weight': 600, class: 'ink', text: txt }, g);
+			return g;
+		});
+	},
+	update(t) {
+		const tC = W('contour', 1.2), tK = W('corners', 4), tS = W('splits', 5.5), tTab = W('tab', 8), tSo = W('socket', 8.8), tFl = W('flat', 9.6);
+		this.g.setAttribute('opacity', prog(t, 0, .5));
+		this.contour.setAttribute('stroke-dashoffset', 1400 * (1 - prog(t, tC - .3, 1.4, easeInOut)));
+		this.photo.setAttribute('opacity', 1 - 0.45 * prog(t, tS, .5));
+		this.corners.forEach((c, i) => c.setAttribute('opacity', prog(t, tK + i * .12, .3)));
+		this.quad.setAttribute('opacity', prog(t, tK + .5, .4) * (1 - prog(t, tS, .4)));
+		this.sides.forEach((s, i) => s.setAttribute('opacity', prog(t, tS + i * .15, .35)));
+		const at = { tab: tTab, socket: tSo, flat: tFl, unknown: tFl };
+		this.labels.forEach((l) => l.g.setAttribute('opacity', prog(t, at[l.type], .35)));
+		const sTimes = [tC - .3, tK, tS, tTab];
+		this.steps.forEach((g, i) => {
+			const on = prog(t, sTimes[i], .35);
+			g.setAttribute('opacity', 0.25 + 0.75 * on);
+		});
+	}
+};
+
+/* ---------- 5. Matching and beam search ---------- */
+function miniBoard(parent, x, y, size, order, label) {
+	const g = $('g', { transform: `translate(${x} ${y})` }, parent);
+	$('rect', { x: -8, y: -8, width: size + 16, height: size + 16, rx: 10, fill: '#fff', stroke: '#E5E6DF' }, g);
+	const cell = size / 4;
+	const cells = [];
+	for (let k = 0; k < 16; k++) {
+		const src = order[k];
+		const r = Math.floor(k / 4), c = k % 4, sr = Math.floor(src / 4), sc = src % 4;
+		const cg = $('svg', { x: c * cell, y: r * cell, width: cell, height: cell, viewBox: `${sc * 150} ${sr * 150} 150 150`, opacity: 0 }, g);
+		$('image', { href: 'assets/art.png', width: 600, height: 600 }, cg);
+		cells.push(cg);
+	}
+	$('rect', { width: size, height: size, fill: 'none', stroke: 'rgba(36,49,45,.15)' }, g);
+	if (label) $('text', { x: size / 2, y: size + 52, 'text-anchor': 'middle', 'font-size': 30, 'font-weight': 600, class: 'ink', text: label }, g);
+	return { g, cells };
+}
+SCENES.s05_match = {
+	build(root) {
+		paperBg(root);
+		const P = DATA.pair;
+		// left: shape + color evidence
+		const panel = $('g', { transform: 'translate(120 170)' }, root);
+		$('rect', { width: 760, height: 740, rx: 28, fill: '#fff', filter: 'url(#softshadow)' }, panel);
+		$('text', { x: 50, y: 80, 'font-size': 40, 'font-weight': 650, class: 'ink', text: 'Does this tab fit that socket?' }, panel);
+		const k = 560 / Math.max(P.a.length, P.b.length);
+		const A = P.a.pts.map((p) => [100 + p[0] * k, 300 - p[1] * k]);
+		const B = [...P.b.pts].reverse().map((p) => [100 + (P.b.length - p[0]) * k, 300 + p[1] * k]);
+		this.baseLine = $('line', { x1: 100, x2: 660, y1: 300, y2: 300, stroke: 'rgba(36,49,45,.12)', 'stroke-dasharray': '4 6' }, panel);
+		this.A = $('polyline', { points: polyOf(A), fill: 'none', stroke: '#167A6B', 'stroke-width': 7, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, panel);
+		this.B = $('polyline', { points: polyOf(B), fill: 'none', stroke: '#24312d', 'stroke-width': 4, 'stroke-dasharray': '10 7', 'stroke-linejoin': 'round' }, panel);
+		$('text', { x: 50, y: 470, 'font-size': 28, class: 'muted', text: 'Colors just inside each cut' }, panel);
+		this.stripA = $('g', {}, panel);
+		this.stripB = $('g', {}, panel);
+		P.a.strip.forEach((c, i) => $('rect', { x: 100 + i * 23.3, y: 500, width: 24, height: 34, fill: c }, this.stripA));
+		[...P.b.strip].reverse().forEach((c, i) => $('rect', { x: 100 + i * 23.3, y: 534, width: 24, height: 34, fill: c }, this.stripB));
+		const bar = (y, label) => {
+			const g = $('g', { transform: `translate(50 ${y})` }, panel);
+			$('text', { y: 0, 'font-size': 28, 'font-weight': 600, class: 'ink', text: label }, g);
+			$('rect', { x: 230, y: -24, width: 420, height: 28, rx: 14, fill: '#efebe2' }, g);
+			const f = $('rect', { x: 230, y: -24, width: 0, height: 28, rx: 14, fill: '#167A6B' }, g);
+			const v = $('text', { x: 670, y: 0, 'font-size': 26, 'font-weight': 650, fill: '#167A6B', text: 'Close', opacity: 0 }, g);
+			return { f, v };
+		};
+		this.shapeBar = bar(650, 'Shape');
+		this.colorBar = bar(700, 'Color seam');
+		// right: beam search
+		const right = $('g', { transform: 'translate(980 170)' }, root);
+		this.rightTitle = $('text', { x: 0, y: 40, 'font-size': 40, 'font-weight': 650, class: 'ink', text: 'Beam search over the grid', opacity: 0 }, right);
+		const truth = [...Array(16).keys()];
+		const swap = (arr, a, b) => { const o = [...arr]; [o[a], o[b]] = [o[b], o[a]]; return o; };
+		this.partials = [truth, swap(truth, 5, 6), swap(truth, 1, 4), swap(truth, 9, 13), swap(truth, 2, 3), swap(truth, 10, 14)].map((ord, i) => {
+			const b = miniBoard(right, (i % 3) * 270, 110 + Math.floor(i / 3) * 290, 230, ord);
+			b.g.setAttribute('opacity', 0);
+			return b;
+		});
+		this.pruned = [1, 4, 5];
+		this.cross = this.pruned.map((i) => {
+			const x = (i % 3) * 270, y = 110 + Math.floor(i / 3) * 290;
+			const c = $('g', { opacity: 0 }, right);
+			$('line', { x1: x + 20, y1: y + 20, x2: x + 210, y2: y + 210, stroke: '#B74444', 'stroke-width': 10, 'stroke-linecap': 'round' }, c);
+			$('line', { x1: x + 210, y1: y + 20, x2: x + 20, y2: y + 210, stroke: '#B74444', 'stroke-width': 10, 'stroke-linecap': 'round' }, c);
+			return c;
+		});
+		this.finals = [truth, swap(truth, 5, 6), swap(truth, 9, 13)].map((ord, i) => {
+			const b = miniBoard(right, i * 270, 300, 230, ord, `Option ${i + 1}`);
+			b.g.setAttribute('opacity', 0);
+			b.cells.forEach((c) => c.setAttribute('opacity', 1));
+			return b;
+		});
+	},
+	update(t) {
+		const tTry = W('tried', 1.2), tMir = W('mirror', 4), tSeam = W('continues', 6.5), tBeam = W('beam search', 9), tKeep = W('three best', 12);
+		// shape: socket slides up onto the tab
+		const ks = prog(t, tTry, 1.6, easeInOut);
+		this.B.setAttribute('transform', `translate(0 ${lerp(150, 0, ks)})`);
+		this.A.setAttribute('transform', `translate(0 ${lerp(-60, 0, ks)})`);
+		const kb = prog(t, tMir, .9);
+		this.shapeBar.f.setAttribute('width', 420 * 0.82 * kb);
+		this.shapeBar.v.setAttribute('opacity', prog(t, tMir + .7, .3));
+		const kc = prog(t, tSeam - .6, 1.1, easeInOut);
+		this.stripA.setAttribute('transform', `translate(0 ${lerp(-26, 0, kc)})`);
+		this.stripB.setAttribute('transform', `translate(0 ${lerp(26, 0, kc)})`);
+		const kcb = prog(t, tSeam, .9);
+		this.colorBar.f.setAttribute('width', 420 * 0.88 * kcb);
+		this.colorBar.v.setAttribute('opacity', prog(t, tSeam + .7, .3));
+		// beam
+		this.rightTitle.setAttribute('opacity', prog(t, tBeam - .4, .4));
+		const fillDur = Math.max(1.6, tKeep - tBeam - 0.6);
+		this.partials.forEach((b, i) => {
+			const on = prog(t, tBeam - .2 + i * .08, .35);
+			const out = prog(t, tKeep - .3, .4);
+			b.g.setAttribute('opacity', on * (1 - out) * (this.pruned.includes(i) ? 1 - 0.75 * prog(t, tBeam + fillDur * .55, .3) : 1));
+			const limit = this.pruned.includes(i) ? 7 : 16;
+			b.cells.forEach((c, k) => c.setAttribute('opacity', (k < limit ? prog(t, tBeam + (k / 16) * fillDur, .2) : 0)));
+		});
+		this.cross.forEach((c) => c.setAttribute('opacity', prog(t, tBeam + fillDur * .55, .3) * (1 - prog(t, tKeep - .3, .4))));
+		this.finals.forEach((b, i) => {
+			const k = prog(t, tKeep + i * .15, .5, back);
+			b.g.setAttribute('opacity', clamp(k));
+			b.g.setAttribute('transform', `translate(${i * 270} ${300 + (1 - k) * 30})`);
+		});
+	}
+};
+
+/* ---------- 7. Honest labels ---------- */
+SCENES.s07_honest = {
+	build(root) {
+		paperBg(root);
+		this.big = $('g', {}, root);
+		$('text', { x: 960, y: 330, 'text-anchor': 'middle', 'font-size': 150, 'font-weight': 700, fill: '#24312d', text: '“95% sure”' }, this.big);
+		this.strike = $('line', { x1: 560, y1: 290, x2: 1360, y2: 290, stroke: '#B74444', 'stroke-width': 16, 'stroke-linecap': 'round', 'stroke-dasharray': 820, 'stroke-dashoffset': 820 }, this.big);
+		this.sub = $('text', { x: 960, y: 420, 'text-anchor': 'middle', 'font-size': 40, class: 'muted', text: 'Scores are rankings, not probabilities.' }, root);
+		const chips = [
+			['Strong candidate', '#e3f0ed', '#167A6B', 'Both edges prefer each other'],
+			['Needs a check', '#f8eedf', '#8a5713', 'Try it on the table'],
+			['Human-confirmed', '#e2f1e9', '#247B56', 'You said it fits; it stays locked']
+		];
+		this.chips = chips.map(([label, bg, fg, desc], i) => {
+			const g = $('g', { transform: `translate(${380 + i * 580} 640)`, opacity: 0 }, root);
+			const pill = $('rect', { y: -50, height: 100, rx: 50, fill: bg }, g);
+			const icon = $('g', {}, g);
+			$('circle', { r: 16, fill: 'none', stroke: fg, 'stroke-width': 5, 'stroke-dasharray': i === 1 ? '6 5' : '' }, icon);
+			if (i === 2) $('path', { d: 'M-8 0l6 7 12-14', fill: 'none', stroke: fg, 'stroke-width': 5, 'stroke-linecap': 'round' }, icon);
+			const text = $('text', { y: 15, 'font-size': 44, 'font-weight': 650, fill: fg, text: label }, g);
+			$('text', { y: 120, 'text-anchor': 'middle', 'font-size': 32, class: 'muted', text: desc }, g);
+			// lay out from the measured label width
+			const tw = text.getComputedTextLength();
+			const w = tw + 140;
+			pill.setAttribute('x', -w / 2);
+			pill.setAttribute('width', w);
+			icon.setAttribute('transform', `translate(${-w / 2 + 56} 0)`);
+			text.setAttribute('x', -w / 2 + 96);
+			return g;
+		});
+	},
+	update(t) {
+		const tN = W('ninety five', 3), tA = W('strong candidate', 6), tB = W('needs a check', 7.2), tC = W('confirmed by you', 8.4);
+		this.big.setAttribute('opacity', prog(t, 0.1, .5));
+		this.sub.setAttribute('opacity', prog(t, 0.6, .5));
+		this.strike.setAttribute('stroke-dashoffset', 820 * (1 - prog(t, tN, .5)));
+		[tA, tB, tC].forEach((ts, i) => {
+			const k = prog(t, ts - .1, .45, back);
+			this.chips[i].setAttribute('opacity', clamp(k));
+			this.chips[i].setAttribute('transform', `translate(${380 + i * 580} ${640 + (1 - k) * 30})`);
+		});
+	}
+};
+
+/* ---------- 10. Architecture ---------- */
+SCENES.s10_stack = {
+	build(root) {
+		paperBg(root);
+		const box = (x, title, lines, color) => {
+			const g = $('g', { transform: `translate(${x} 330)`, opacity: 0 }, root);
+			$('rect', { width: 480, height: 400, rx: 28, fill: '#fff', stroke: color, 'stroke-width': 3, filter: 'url(#softshadow)' }, g);
+			$('text', { x: 240, y: 80, 'text-anchor': 'middle', 'font-size': 42, 'font-weight': 650, class: 'ink', text: title }, g);
+			const chips = lines.map((l, i) => {
+				const c = $('g', { transform: `translate(240 ${165 + i * 72})` }, g);
+				const w = l.length * 17 + 60;
+				const r = $('rect', { x: -w / 2, y: -28, width: w, height: 56, rx: 28, fill: '#efebe2' }, c);
+				const tx = $('text', { y: 10, 'text-anchor': 'middle', 'font-size': 28, 'font-weight': 600, class: 'ink', text: l }, c);
+				return { r, tx };
+			});
+			return { g, chips };
+		};
+		this.browser = box(110, 'Your browser', ['Match edges', 'Solve the board', 'Check placements'], '#167A6B');
+		this.worker = box(720, 'Cloudflare Worker', ['Private photo · R2', 'Sessions · D1', 'Free tier'], '#B97720');
+		this.meta = box(1330, 'Meta SAM 3.1', ['Segments every piece', 'Streams masks back'], '#24312d');
+		this.lanes = $('g', { opacity: 0 }, root);
+		$('path', { d: 'M350 330V285H1570V330', fill: 'none', stroke: '#24312d', 'stroke-width': 3, 'stroke-dasharray': '8 8' }, this.lanes);
+		$('path', { d: 'M1570 730V780H350V730', fill: 'none', stroke: '#167A6B', 'stroke-width': 3, 'stroke-dasharray': '8 8' }, this.lanes);
+		$('text', { x: 960, y: 270, 'text-anchor': 'middle', 'font-size': 26, class: 'muted', text: 'photo' }, this.lanes);
+		$('text', { x: 960, y: 818, 'text-anchor': 'middle', 'font-size': 26, fill: '#167A6B', text: 'streamed masks' }, this.lanes);
+		this.arrows = [[590, 720], [1200, 1330]].map(([a, b]) => {
+			const g = $('g', { opacity: 0 }, root);
+			$('line', { x1: a, x2: b, y1: 480, y2: 480, stroke: '#24312d', 'stroke-width': 3, 'stroke-dasharray': '8 8' }, g);
+			$('line', { x1: a, x2: b, y1: 580, y2: 580, stroke: '#167A6B', 'stroke-width': 3, 'stroke-dasharray': '8 8' }, g);
+			return g;
+		});
+		this.photoDot = $('g', { opacity: 0 }, root);
+		$('rect', { x: -30, y: -22, width: 60, height: 44, rx: 6, fill: '#2f4a3e', stroke: '#fff', 'stroke-width': 3 }, this.photoDot);
+		this.maskDots = [0, 1, 2].map(() => $('path', { d: 'M-14 -10h10a4 4 0 1 1 8 0h10v20h-28z', fill: '#2fb39f', stroke: '#fff', 'stroke-width': 2, opacity: 0 }, root));
+		this.badge = $('g', { transform: 'translate(960 930)', opacity: 0 }, root);
+		$('rect', { x: -330, y: -44, width: 660, height: 88, rx: 44, fill: '#24312d' }, this.badge);
+		$('text', { y: 14, 'text-anchor': 'middle', 'font-size': 36, 'font-weight': 600, fill: '#fff', text: 'Private · deleted after 24 hours' }, this.badge);
+		this.title = $('text', { x: 960, y: 160, 'text-anchor': 'middle', 'font-size': 56, 'font-weight': 650, class: 'ink', text: 'Nearly free to run', opacity: 0 }, root);
+	},
+	update(t) {
+		const tFree = W('free tier', 1.2), tStore = W('stores', 3), tStream = W('streams', 4.5), tMatch = W('matching', 7), tPriv = W('private', 10);
+		this.title.setAttribute('opacity', prog(t, 0.1, .5));
+		this.browser.g.setAttribute('opacity', prog(t, 0.2, .5));
+		this.worker.g.setAttribute('opacity', prog(t, 0.5, .5));
+		this.meta.g.setAttribute('opacity', prog(t, 0.8, .5));
+		this.worker.chips[2].r.setAttribute('fill', prog(t, tFree, .3) > .5 ? '#f8eedf' : '#efebe2');
+		this.arrows.forEach((a, i) => a.setAttribute('opacity', prog(t, 1 + i * .3, .4)));
+		// photo travels browser -> worker -> meta
+		const kp = prog(t, tStore - .2, 1.8, easeInOut);
+		this.lanes.setAttribute('opacity', prog(t, tStore - .6, .4));
+		this.photoDot.setAttribute('transform', `translate(${lerp(350, 1570, kp)} 285)`);
+		this.photoDot.setAttribute('opacity', kp > 0 && kp < 1 ? 1 : 0);
+		this.worker.chips[0].r.setAttribute('fill', prog(t, tStore, .3) > .5 ? '#f8eedf' : '#efebe2');
+		this.maskDots.forEach((m, i) => {
+			const k = prog(t, tStream + i * .35, 1.6, easeInOut);
+			m.setAttribute('transform', `translate(${lerp(1570, 350, k)} 780)`);
+			m.setAttribute('opacity', k > 0 && k < 1 ? 1 : 0);
+		});
+		this.meta.chips[1].r.setAttribute('fill', prog(t, tStream, .3) > .5 ? '#e3f0ed' : '#efebe2');
+		this.browser.chips.forEach((c, i) => c.r.setAttribute('fill', prog(t, tMatch + i * .5, .3) > .5 ? '#e3f0ed' : '#efebe2'));
+		const kb = prog(t, tPriv - .2, .5, back);
+		this.badge.setAttribute('opacity', clamp(kb));
+		this.badge.setAttribute('transform', `translate(960 ${930 + (1 - kb) * 30})`);
+	}
+};
+
+/* ---------- 11. Outro ---------- */
+SCENES.s11_outro = {
+	build(root) {
+		paperBg(root);
+		this.pieces = DATA.pieces.map((p, i) => {
+			const g = $('g', { filter: 'url(#shadow)' }, root);
+			pieceArt(g, p, 'o' + i);
+			return { g, p, pose: DATA.poses[i] };
+		});
+		this.logo = logo(root, 1000, 330, 3);
+		this.logo.g.setAttribute('opacity', 0);
+		this.name = $('text', { x: 1110, y: 400, 'font-size': 92, 'font-weight': 650, 'letter-spacing': -3, class: 'ink', text: 'PuzzleAR', opacity: 0 }, root);
+		this.tag = $('text', { x: 1000, y: 500, 'font-size': 44, 'font-weight': 500, class: 'ink', text: 'A little help for the pieces that don’t fit.', opacity: 0 }, root);
+		this.url = $('text', { x: 1000, y: 610, 'font-size': 38, 'font-weight': 650, fill: '#167A6B', text: 'puzzlear.jacob.workers.dev', opacity: 0 }, root);
+		this.meta = $('text', { x: 1000, y: 690, 'font-size': 28, class: 'muted', text: 'Built with Meta SAM 3.1 · runs on Cloudflare', opacity: 0 }, root);
+	},
+	update(t) {
+		const k = prog(t, 0.1, 1.8, easeInOut);
+		const s0 = 0.42, s1 = 0.95;
+		this.pieces.forEach(({ g, p, pose }, i) => {
+			const kk = prog(t, 0.05 + i * 0.03, 1.6, easeInOut);
+			const sx = 60 + pose.x * s0, sy = 160 + pose.y * s0;
+			const tx = 170 + (p.col + .5) * 150 * s1, ty = 255 + (p.row + .5) * 150 * s1;
+			const rot = lerp(pose.theta * 57.2958, 0, kk);
+			g.setAttribute('transform', `translate(${lerp(sx, tx, kk)} ${lerp(sy, ty, kk)}) rotate(${rot}) scale(${lerp(s0, s1, kk)})`);
+		});
+		void k;
+		const tl = W('a little help', 1.6);
+		this.logo.g.setAttribute('opacity', prog(t, 1.2, .5));
+		this.name.setAttribute('opacity', prog(t, 1.3, .5));
+		this.tag.setAttribute('opacity', prog(t, tl, .6));
+		this.url.setAttribute('opacity', prog(t, tl + 1.2, .5));
+		this.meta.setAttribute('opacity', prog(t, tl + 1.6, .5));
+	}
+};
+
+let current;
+window.setup = async ({ scene, words = [], lead = 0.8, duration = 10 }) => {
+	if (!DATA) DATA = await (await fetch('assets/data.json')).json();
+	WORDS = words; LEAD = lead; DUR = duration;
+	const root = document.getElementById('root');
+	root.replaceChildren();
+	current = SCENES[scene];
+	current.build(root);
+	current.update(0);
+	// wait for images to decode
+	await Promise.all([...document.querySelectorAll('image')].map((im) => new Promise((r) => { const i = new Image(); i.onload = i.onerror = r; i.src = im.getAttribute('href'); })));
+	await document.fonts.ready;
+	return true;
+};
+window.seek = (t) => current.update(t);
+</script>
+</body>
+</html>

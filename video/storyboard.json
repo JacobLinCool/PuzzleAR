@@ -1,0 +1,33 @@
+{
+  "server": "http://127.0.0.1:8100",
+  "output_dir": "build",
+  "voice": "female, warm, clear, calm, mid pitch, neutral American accent, friendly narrator",
+  "voice_ref_text": "Every puzzle starts the same way: a pile of pieces and a little bit of patience.",
+  "language": "English",
+  "max_word_error_rate": 0.05,
+  "max_attempts": 4,
+  "scenes": [
+    { "name": "s01_hook", "kind": "anim", "pad": 1.2,
+      "narration": "You tip a puzzle onto the table. A few pieces are obvious. The rest just stare back at you. Most puzzle helpers want the box image, or a clean scan of every single piece. Puzzle A R only needs one photo of your table." },
+    { "name": "s02_title", "kind": "anim", "pad": 1.6,
+      "narration": "Puzzle A R. See the pieces, find the fit, and finish it together." },
+    { "name": "s03_scan", "kind": "app", "pad": 1.4,
+      "narration": "This is the real app. Open the sample puzzle: sixteen pieces on a felt mat. Meta's Segment Anything model outlines every piece and gives it a number you can find on the table." },
+    { "name": "s04_geometry", "kind": "anim", "pad": 1.0,
+      "narration": "Each outline becomes a contour. Puzzle A R finds the four true corners, splits the edge into four sides, and labels each one: a tab, a socket, or a flat border." },
+    { "name": "s05_match", "kind": "anim", "pad": 1.0,
+      "narration": "Then every tab is tried against every socket. One score checks that the two cuts mirror each other, another that the picture continues across the seam. A beam search fills the grid and keeps the three best complete boards." },
+    { "name": "s06_solve", "kind": "app", "pad": 1.4,
+      "narration": "The proposed board is built from the real textures in your photo. Amber marks are edges worth a second look. Tap a cell to see the evidence, then say whether the pieces fit. Your answer becomes a rule, and the board is solved again around it." },
+    { "name": "s07_honest", "kind": "anim", "pad": 1.0,
+      "narration": "Scores are rankings, not probabilities, so Puzzle A R never claims to be ninety five percent sure. Every edge is a strong candidate, needs a check, or is confirmed by you." },
+    { "name": "s08_guide", "kind": "app", "pad": 1.4,
+      "narration": "Now the physical part. Puzzle A R shows which piece to pick up and where it goes. Mark the empty area once, and a ghost of the real piece appears in its cell. A new photo checks the move: the old spot must be empty, and the pattern must line up. If the photo isn't conclusive, you confirm by hand." },
+    { "name": "s09_finish", "kind": "app", "pad": 1.4,
+      "narration": "Step by step the board fills in, and any move can be undone. At the end, download the assembled image and the full solution." },
+    { "name": "s10_stack", "kind": "anim", "pad": 1.0,
+      "narration": "It runs on Cloudflare's free tier. The server only stores your photo and streams the model's answer to your browser, where matching, solving and checking happen. Sessions are private and deleted after a day." },
+    { "name": "s11_outro", "kind": "anim", "pad": 2.6,
+      "narration": "Puzzle A R. A little help for the pieces that don't fit." }
+  ]
+}

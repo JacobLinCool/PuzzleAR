@@ -1,0 +1,2 @@
+# Copy to .dev.vars for local development. Never commit real keys.
+MODEL_API_KEY=

@@ -134,3 +134,18 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Cloudflare / SvelteKit
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.wrangler
+/.svelte-kit
+test-results
+playwright-report
+worker-configuration.d.ts
+
+/video/build
+
+# real user photos used for local debugging only
+/fixtures-private

@@ -1,0 +1,31 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "puzzlear",
+	"account_id": "b1c3d1b89f9131a84a0f1f6a973232f1",
+	"compatibility_date": "2026-10-28",
+	"compatibility_flags": ["nodejs_compat"],
+	"main": ".svelte-kit/cloudflare/_worker.js",
+	"assets": {
+		"binding": "ASSETS",
+		"directory": ".svelte-kit/cloudflare"
+	},
+	"workers_dev": true,
+	"preview_urls": false,
+	"observability": { "enabled": true },
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "puzzlear",
+			"database_id": "aad7a3e3-1544-43ef-ba09-72d109a13b34",
+			"migrations_dir": "migrations"
+		}
+	],
+	"r2_buckets": [{ "binding": "BUCKET", "bucket_name": "puzzlear-sessions" }],
+	"vars": {
+		"SESSION_RETENTION_HOURS": "24",
+		"MAX_IMAGE_UPLOAD_MB": "15",
+		"SAM_SESSION_REQUEST_LIMIT": "15",
+		"META_DAILY_BUDGET_USD": "25",
+		"SAM_PROMPT": "jigsaw puzzle piece"
+	}
+}
